@@ -1,0 +1,6 @@
+What Is This?
+=============
+
+A test suite to determine whether GRUB supports OpenPGP signatures with keyids given in hashed packets.
+
+As of 2.02, this didn't work without a patch written by Ignat Korchagin. Unfortunately, upstream never merged this patch, and major code changes happened between 2.02 and the later 2.04 release.

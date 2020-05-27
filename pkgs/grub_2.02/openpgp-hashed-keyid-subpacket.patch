@@ -1,0 +1,148 @@
+diff --git a/grub-core/commands/verify.c b/grub-core/commands/verify.c
+index 67cb1c785..f4a05ed27 100644
+--- a/grub-core/commands/verify.c
++++ b/grub-core/commands/verify.c
+@@ -445,6 +445,38 @@ rsa_pad (gcry_mpi_t *hmpi, grub_uint8_t *hval,
+   return ret;
+ }
+ 
++static grub_uint64_t
++grub_subpacket_keyid_search (const grub_uint8_t * sub, grub_ssize_t sub_len)
++{
++  const grub_uint8_t *ptr;
++  grub_uint32_t l;
++  grub_uint64_t keyid = 0;
++
++  for (ptr = sub; ptr < sub + sub_len; ptr += l)
++    {
++      if (*ptr < 192)
++       l = *ptr++;
++      else if (*ptr < 255)
++       {
++         if (ptr + 1 >= sub + sub_len)
++           break;
++         l = (((ptr[0] & ~192) << GRUB_CHAR_BIT) | ptr[1]) + 192;
++         ptr += 2;
++       }
++      else
++       {
++         if (ptr + 5 >= sub + sub_len)
++           break;
++         l = grub_be_to_cpu32 (grub_get_unaligned32 (ptr + 1));
++         ptr += 5;
++       }
++      if (*ptr == 0x10 && l >= 8)
++       keyid = grub_get_unaligned64 (ptr + 1);
++    }
++
++  return keyid;
++}
++
+ static grub_err_t
+ grub_verify_signature_real (char *buf, grub_size_t size,
+ 			    grub_file_t f, grub_file_t sig,
+@@ -529,20 +561,31 @@ grub_verify_signature_real (char *buf, grub_size_t size,
+ 	    break;
+ 	  hash->write (context, readbuf, r);
+ 	}
++    grub_free (readbuf);
++
++    readbuf = grub_malloc (rem);
++    if (!readbuf)
++      goto fail;
+ 
+     hash->write (context, &v, sizeof (v));
+     hash->write (context, &v4, sizeof (v4));
+-    while (rem)
++
++    r = 0;
++    while (r < rem)
+       {
+-	r = grub_file_read (sig, readbuf,
+-			    rem < READBUF_SIZE ? rem : READBUF_SIZE);
+-	if (r < 0)
++        grub_ssize_t rr = grub_file_read (sig, readbuf + r, rem - r);
++        if (rr < 0)
+ 	  goto fail;
+-	if (r == 0)
++	if (rr == 0)
+ 	  break;
+-	hash->write (context, readbuf, r);
+-	rem -= r;
++        r += rr;
+       }
++    if (r != rem)
++      goto fail;
++    hash->write (context, readbuf, rem);
++    keyid = grub_subpacket_keyid_search (readbuf, rem);
++    grub_free (readbuf);
++
+     hash->write (context, &v, sizeof (v));
+     s = 0xff;
+     hash->write (context, &s, sizeof (s));
+@@ -550,40 +593,34 @@ grub_verify_signature_real (char *buf, grub_size_t size,
+     r = grub_file_read (sig, &unhashed_sub, sizeof (unhashed_sub));
+     if (r != sizeof (unhashed_sub))
+       goto fail;
+-    {
+-      grub_uint8_t *ptr;
+-      grub_uint32_t l;
+-      rem = grub_be_to_cpu16 (unhashed_sub);
+-      if (rem > READBUF_SIZE)
+-	goto fail;
+-      r = grub_file_read (sig, readbuf, rem);
+-      if (r != rem)
+-	goto fail;
+-      for (ptr = readbuf; ptr < readbuf + rem; ptr += l)
+-	{
+-	  if (*ptr < 192)
+-	    l = *ptr++;
+-	  else if (*ptr < 255)
+-	    {
+-	      if (ptr + 1 >= readbuf + rem)
+-		break;
+-	      l = (((ptr[0] & ~192) << GRUB_CHAR_BIT) | ptr[1]) + 192;
+-	      ptr += 2;
+-	    }
+-	  else
+-	    {
+-	      if (ptr + 5 >= readbuf + rem)
+-		break;
+-	      l = grub_be_to_cpu32 (grub_get_unaligned32 (ptr + 1));
+-	      ptr += 5;
+-	    }
+-	  if (*ptr == 0x10 && l >= 8)
+-	    keyid = grub_get_unaligned64 (ptr + 1);
+-	}
+-    }
++    rem = grub_be_to_cpu16 (unhashed_sub);
++    readbuf = grub_malloc (rem);
++    if (!readbuf)
++      goto fail;
++
++    r = 0;
++    while (r < rem)
++      {
++       grub_ssize_t rr = grub_file_read (sig, readbuf + r, rem - r);
++       if (rr < 0)
++         goto fail;
++       if (rr == 0)
++         break;
++       r += rr;
++      }
++    if (r != rem)
++      goto fail;
++
++    if (keyid == 0)
++      keyid = grub_subpacket_keyid_search (readbuf, rem);
++    grub_free (readbuf);
+ 
+     hash->final (context);
+ 
++    readbuf = grub_zalloc (READBUF_SIZE);
++    if (!readbuf)
++      goto fail;
++
+     grub_dprintf ("crypt", "alive\n");
+ 
+     hval = hash->read (context);
