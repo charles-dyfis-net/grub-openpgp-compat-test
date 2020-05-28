@@ -47,7 +47,7 @@ in rec {
   testPubKeyGnupg = pkgs.runCommand "pgp-test-pubkey-gnupg.pgp" { inherit testPubKeyGo; } ''
     export GNUPGHOME=$PWD/gpghome
     mkdir -p "$GNUPGHOME" || exit
-    ${pkgs.gnupg}/bin/gpg --import ${testPubKeyGo}
+    ${pkgs.gnupg}/bin/gpg --import "$testPubKeyGo"
     ${pkgs.gnupg}/bin/gpg --export >"$out"
   '';
 
