@@ -11,6 +11,9 @@ This is a test framework intended to make it easier to build a successor patch.
 How Do I Use It?
 ================
 
+Running Reports
+---------------
+
 This currently hardcodes x86_64 as the only supported target architecture; that should be trivial to change, if there's ever a need.
 
 - Install the Nix package manager.
@@ -19,9 +22,8 @@ This currently hardcodes x86_64 as the only supported target architecture; that 
 
 - Read the file linked from the symlink named `result` this creates. (`cat result`)
 
-
 What Does A Report Look Like?
-=============================
+-----------------------------
 
 As of this writing, something like:
 
@@ -53,6 +55,20 @@ GRUB_master          Gnupg                Gnupg                VERIFY SUCCEEDED 
 
 ...and giving us a directory name where we can find the (debug-symbol-enabled) GRUB binaries that were used to generate each test result.
 
+Attaching With Gdb
+------------------
+
+Another target is available, which generates a shell script for each test case, which will invoke that test case with gdb attached. To build it:
+
+- Run `nix-build -A gdbScriptsDir`
+- `result` will now be symlinked to a directory with a shell script for each possible test case; run the one you want. For example:
+
+   ```
+   $ ./result/debug-GRUB_2.02_Patched-keyGo-sigGo
+   ```
+
+  ...will leave you in a copy of gdb, with debug symbols loaded and sources in the search path, for a copy of GRUB 2.02 with Ignat's patch applied.
+
 
 What Future Enhancements Are Pending?
 =====================================
@@ -60,7 +76,7 @@ What Future Enhancements Are Pending?
 - [X] Signatures created by go's openpgp library need to be included in the sample results given above.
 - [X] The table of results should include the derivation names, so `nix log` can be used to include the logs for the individual test runs, or `nix show-derivation` can be used to see the components and build steps that went into that test run.
 - [ ] A patched version of grub 2.04 (and/or master) is expected to be added, as a patch is developed.
-- [ ] A target will be added which generates a script which, when run, attaches gdb to any test case (which is to say, grub version + pubkey + signature combo).
+- [X] A target will be added which generates a script which, when run, attaches gdb to any test case (which is to say, grub version + pubkey + signature combo).
 
 
 How Is This Content Licensed?

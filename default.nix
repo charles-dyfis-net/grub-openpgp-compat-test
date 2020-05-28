@@ -1,6 +1,12 @@
 {system ? builtins.currentSystem}: 
 let
-  pkgs = import <nixos> {inherit system;};  # built/tested with the nixos-20.03 release channel on a Linux host
+  # pin a specific nixpkgs so this works consistently for folks running different versions locally
+  pkgs = import (builtins.fetchTarball {
+    name = "nixos-20.03-20200528";
+    url = "https://github.com/nixos/nixpkgs/archive/d55a904271f9502e9fd1290be5268ee168893dd3.tar.gz";
+    sha256 = "1qakjpv1szxl9f1jfsw65ybjmcv3c0609p7hga72snjypq9bzypz";
+  }) {inherit system;};
+
   inherit (pkgs) stdenv;
   grubDevBuild = grubPkg: pkgs.enableDebugging (grubPkg.overrideAttrs (a: {configureFlags = ["--with-platform=emu" "--target=x86_64"]; } ));
 
@@ -83,6 +89,10 @@ in rec {
     ${goPgpTools}/bin/sign "$privateKey" <"$signedFile" >"$out"
   '';
 
+  # Call a function with each possible test case; return a list of its results
+  forEachTestCase = fn: pkgs.lib.flatten (builtins.map (grubVersion: builtins.map (pubKeyForm: builtins.map (sigForm: fn {inherit grubVersion pubKeyForm sigForm;}) sigForms) pubKeyForms) grubVersions);
+
+  # The data used to populate those test cases:
   grubVersions = [
     {name = "GRUB_2.02_Unpatched"; grub = grub_202;         moduleName = "verify";}
     {name = "GRUB_2.02_Patched";   grub = grub_202_patched; moduleName = "verify";}
@@ -97,23 +107,41 @@ in rec {
     {name = "Go";    sigMethod = signWithGo; }
     {name = "Gnupg"; sigMethod = signWithGnupg; }
   ];
-  genReportPiece = { grubVersion, pubKeyForm, sigForm }:
+
+  grubRunCmd = { grubVersion, pubKeyForm, sigForm }:
     let
       inherit (sigForm) sigMethod;
-      grubCfg = pkgs.writeTextFile { name="grub.cfg"; text = grubCfgTextBuilder { inherit (grubVersion) moduleName; }; };
+      grubCfgDir = pkgs.writeTextDir "grub.cfg" (grubCfgTextBuilder { inherit (grubVersion) moduleName; });
       grubMemdisk = grubMemdiskBuilder rec {
-        inherit (pubKeyForm) pubKey;
-        signedFile = ./testContent;
-        signatureFile = sigMethod { inherit signedFile; };
-      };
-    in pkgs.runCommand "grubTest-${grubVersion.name}-${pubKeyForm.name}-${sigForm.name}" {inherit grubCfg grubMemdisk;} ''
-      mkdir -p ./build
-      cp -- "$grubCfg" ./build/grub.cfg || exit
-      ${grubVersion.grub}/bin/grub-emu --memdisk="$grubMemdisk" --dir="$PWD/build" | tee ./grub.out >&2
+          inherit (pubKeyForm) pubKey;
+          signedFile = ./testContent;
+          signatureFile = sigMethod { inherit signedFile; };
+        };
+    in ''${grubVersion.grub}/bin/grub-emu --memdisk="${grubMemdisk}" --dir="${grubCfgDir}"'';
+
+  gdbScript = {grubVersion, pubKeyForm, sigForm} @ args: pkgs.writeScript "debug-${grubVersion.name}-key${pubKeyForm.name}-sig${sigForm.name}" ''
+    #!/bin/sh
+    exec ${pkgs.gdb}/bin/gdb \
+      --pid="$grub_pid" \
+      --eval-command="directory ${grubPatchedSource grubVersion.grub}/grub-core" \
+      --args ${grubRunCmd args}
+  '';
+
+  gdbScripts = forEachTestCase gdbScript;
+  gdbScriptDir = pkgs.runCommand "gdb-entrypoints.d" {} ''
+    mkdir -p "$out"
+    ${builtins.concatStringsSep "" (map (gdbScript: ''
+      ln -s -- ${gdbScript} "$out"/${gdbScript.name};
+    '') gdbScripts)}
+  '';
+
+  genReportPiece = { grubVersion, pubKeyForm, sigForm }:
+    pkgs.runCommand "grubTest-${grubVersion.name}-${pubKeyForm.name}-${sigForm.name}" {} ''
+      ${grubRunCmd {inherit grubVersion pubKeyForm sigForm;}} | tee ./grub.out >&2
       printf '%-20s %-20s %-20s %-20s %s\n' "${grubVersion.name}" "${pubKeyForm.name}" "${sigForm.name}" "$(tr '\r' '\n' <grub.out | grep -oe '==VERIFY.*==' | tr -d '=')" "${grubVersion.grub}" >"$out"
     '';
 
-  fullReportPieces = pkgs.lib.flatten (builtins.map (grubVersion: builtins.map (pubKeyForm: builtins.map (sigForm: genReportPiece {inherit grubVersion pubKeyForm sigForm;}) sigForms) pubKeyForms) grubVersions);
+  fullReportPieces = forEachTestCase genReportPiece;
   fullReport = pkgs.runCommand "grub-report.txt" { inherit fullReportPieces; } ''
     read -r -a fullReportPieces <<<"$fullReportPieces"
     {
