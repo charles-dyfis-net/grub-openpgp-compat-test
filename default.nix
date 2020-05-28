@@ -95,14 +95,14 @@ in rec {
       mkdir -p ./build
       cp -- "$grubCfg" ./build/grub.cfg || exit
       ${grubVersion.grub}/bin/grub-emu --memdisk="$grubMemdisk" --dir="$PWD/build" | tee ./grub.out >&2
-      printf '%-20s %-20s %-20s %s\n' "${grubVersion.name}" "${pubKeyForm.name}" "${sigForm.name}" "$(tr '\r' '\n' <grub.out | grep -oe '==VERIFY.*==' | tr -d '=')" >"$out"
+      printf '%-20s %-20s %-20s %-20s %s\n' "${grubVersion.name}" "${pubKeyForm.name}" "${sigForm.name}" "$(tr '\r' '\n' <grub.out | grep -oe '==VERIFY.*==' | tr -d '=')" "${grubVersion.grub}" >"$out"
     '';
 
   fullReportPieces = pkgs.lib.flatten (builtins.map (grubVersion: builtins.map (pubKeyForm: builtins.map (sigForm: genReportPiece {inherit grubVersion pubKeyForm sigForm;}) sigForms) pubKeyForms) grubVersions);
   fullReport = pkgs.runCommand "grub-report.txt" { inherit fullReportPieces; } ''
     read -r -a fullReportPieces <<<"$fullReportPieces"
     {
-      printf '%-20s %-20s %-20s %s\n' "Version" "Pubkey Format" "Sig Format" "Result" "===" "===" "===" "==="
+      printf '%-20s %-20s %-20s %-20s %s\n' "Version" "Pubkey Format" "Sig Format" "Result" "Grub Build" "===" "===" "===" "===" "==="
       cat "''${fullReportPieces[@]}"
     } >"$out"
   '';
