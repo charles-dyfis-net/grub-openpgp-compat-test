@@ -25,7 +25,6 @@ in rec {
     };
   }));
 
-  # yes, this is a very non-binary-reproducible thing being described as a Nix derivation.
   goPgpTools = pkgs.buildGoPackage rec {
     pname = "openpgp_test_tools";
     version = "0.0.1";
@@ -35,6 +34,7 @@ in rec {
     subPackages = [ "cmd/create_key" "cmd/extract_pubkey" "cmd/sign" ];
   };
 
+  # yes, this is a very non-binary-reproducible thing being described as a Nix derivation.
   testPrivKey = pkgs.runCommand "pgp-test-privkey.pgp" {} ''
     ${goPgpTools}/bin/create_key >"$out"
   '';
