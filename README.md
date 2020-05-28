@@ -64,10 +64,10 @@ Another target is available, which generates a shell script for each test case, 
 - `result` will now be symlinked to a directory with a shell script for each possible test case; run the one you want. For example:
 
    ```
-   $ ./result/debug-GRUB_2.02_Patched-keyGo-sigGo
+   $ ./result/debug-GRUB_2.02_Patched-keyGnupg-sigGo
    ```
 
-  ...will leave you in a copy of gdb, with debug symbols loaded and sources in the search path, for a copy of GRUB 2.02 with Ignat's patch applied.
+  ...will leave you in a copy of gdb, with debug symbols loaded and sources in the search path, for a copy of GRUB 2.02 with Ignat's patch applied, which will when run attempt to load a public key exported by GnuPG and try to use it to validate a signature made by Go.
 
 
 What Future Enhancements Are Pending?
