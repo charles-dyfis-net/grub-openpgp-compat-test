@@ -59,7 +59,8 @@ What Future Enhancements Are Pending?
 
 - [X] Signatures created by go's openpgp library need to be included in the sample results given above.
 - [X] The table of results should include the derivation names, so `nix log` can be used to include the logs for the individual test runs, or `nix show-derivation` can be used to see the components and build steps that went into that test run.
-- [ ] A patched version of grub 2.04 is expected to be added, as a patch is developed.
+- [ ] A patched version of grub 2.04 (and/or master) is expected to be added, as a patch is developed.
+- [ ] A target will be added which generates a script which, when run, attaches gdb to any test case (which is to say, grub version + pubkey + signature combo).
 
 
 How Is This Content Licensed?
