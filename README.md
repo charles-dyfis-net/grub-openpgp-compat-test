@@ -40,6 +40,10 @@ GRUB_2.04_Unpatched  Go                   Go                   VERIFY FAILED    
 GRUB_2.04_Unpatched  Go                   Gnupg                VERIFY FAILED        /nix/store/49fgagxwcvv6pid6axs2g0953nynknpn-grub-2.04
 GRUB_2.04_Unpatched  Gnupg                Go                   VERIFY FAILED        /nix/store/49fgagxwcvv6pid6axs2g0953nynknpn-grub-2.04
 GRUB_2.04_Unpatched  Gnupg                Gnupg                VERIFY SUCCEEDED     /nix/store/49fgagxwcvv6pid6axs2g0953nynknpn-grub-2.04
+GRUB_master          Go                   Go                   VERIFY FAILED        /nix/store/lagkfcw1yy3v0843w18qf2mc5yywc57a-grub-master
+GRUB_master          Go                   Gnupg                VERIFY FAILED        /nix/store/lagkfcw1yy3v0843w18qf2mc5yywc57a-grub-master
+GRUB_master          Gnupg                Go                   VERIFY FAILED        /nix/store/lagkfcw1yy3v0843w18qf2mc5yywc57a-grub-master
+GRUB_master          Gnupg                Gnupg                VERIFY SUCCEEDED     /nix/store/lagkfcw1yy3v0843w18qf2mc5yywc57a-grub-master
 ```
 
 ...telling us that:

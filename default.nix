@@ -18,6 +18,12 @@ in rec {
   grub_202 = grubDevBuild (pkgs.callPackage ./pkgs/grub_2.02/2.0x.nix { zfsSupport = false; });
   grub_202_patched = grubDevBuild ((pkgs.callPackage ./pkgs/grub_2.02/2.0x.nix { zfsSupport = false; }).overrideAttrs (a: {patches = [./pkgs/grub_2.02/openpgp-hashed-keyid-subpacket.patch] ++ a.patches;}));
   grub_204 = grubDevBuild (pkgs.callPackage ./pkgs/grub_2.04/2.0x.nix { zfsSupport = false; });
+  grub_master = grubDevBuild ((pkgs.callPackage ./pkgs/grub_2.04/2.0x.nix { zfsSupport = false; }).overrideAttrs (a: {
+    name = "grub-master";
+    src = builtins.fetchGit { # placeholder for a TBD branch. Impure as currently written; Nix will recheck for upstream changes
+      url = "https://github.com/charles-dyfis-net/grub";
+    };
+  }));
 
   # yes, this is a very non-binary-reproducible thing being described as a Nix derivation.
   goPgpTools = pkgs.buildGoPackage rec {
@@ -83,6 +89,7 @@ in rec {
     {name = "GRUB_2.02_Unpatched"; grub = grub_202;         moduleName = "verify";}
     {name = "GRUB_2.02_Patched";   grub = grub_202_patched; moduleName = "verify";}
     {name = "GRUB_2.04_Unpatched"; grub = grub_204;         moduleName = "pgp";}
+    {name = "GRUB_master";         grub = grub_master;      moduleName = "pgp";}
   ];
   pubKeyForms = [
     {name = "Go";    pubKey = testPubKeyGo; }
