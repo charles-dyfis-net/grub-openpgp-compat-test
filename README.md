@@ -61,7 +61,7 @@ What Future Enhancements Are Pending?
 How Is This Content Licensed?
 =============================
 
-GnuPG is GPLv3+. Derived works from it fall under that same license.
+GNU GRUB is GPLv3+. Derived works from it fall under that same license.
 
 All other content is MIT-licensed. (This includes content from the nixpkgs repository, for which copyright is held by various contributors to the NixOS project).
 
