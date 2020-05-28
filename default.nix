@@ -20,9 +20,7 @@ in rec {
   grub_204 = grubDevBuild (pkgs.callPackage ./pkgs/grub_2.04/2.0x.nix { zfsSupport = false; });
   grub_master = grubDevBuild ((pkgs.callPackage ./pkgs/grub_2.04/2.0x.nix { zfsSupport = false; }).overrideAttrs (a: {
     name = "grub-master";
-    src = builtins.fetchGit { # placeholder for a TBD branch. Impure as currently written; Nix will recheck for upstream changes
-      url = "https://github.com/charles-dyfis-net/grub";
-    };
+    src = builtins.fetchGit { url = "https://git.savannah.gnu.org/git/grub.git"; };
   }));
 
   goPgpTools = pkgs.buildGoPackage rec {
