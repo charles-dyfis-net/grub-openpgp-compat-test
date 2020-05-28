@@ -2,11 +2,21 @@
 let
   pkgs = import <nixos> {inherit system;};  # built/tested with the nixos-20.03 release channel on a Linux host
   inherit (pkgs) stdenv;
-  grubDevBuild = grubPkg: pkgs.enableDebugging (grubPkg.overrideAttrs (a: a // {configureFlags = ["--with-platform=emu" "--target=x86_64"];} ));
+  grubDevBuild = grubPkg: pkgs.enableDebugging (grubPkg.overrideAttrs (a: {configureFlags = ["--with-platform=emu" "--target=x86_64"]; } ));
+
+  # Build `grubPatchedSource grub_202`, f/e, to generate a Nix derivation with the source of grub_202; gdb can be pointed at this location
+  grubPatchedSource = grubPkg: grubPkg.overrideDerivation (a: {
+    name = "${a.name}-src";
+    phases = "unpackPhase patchPhase installPhase";
+    outputs = ["out"];
+    installPhase = ''
+      cp -av . "$out"
+    '';
+  });
 in rec {
-  inherit pkgs;
+  inherit pkgs grubPatchedSource grubDevBuild;
   grub_202 = grubDevBuild (pkgs.callPackage ./pkgs/grub_2.02/2.0x.nix { zfsSupport = false; });
-  grub_202_patched = grubDevBuild ((pkgs.callPackage ./pkgs/grub_2.02/2.0x.nix { zfsSupport = false; }).overrideAttrs (a: a // {patches = [./pkgs/grub_2.02/openpgp-hashed-keyid-subpacket.patch] ++ a.patches;}));
+  grub_202_patched = grubDevBuild ((pkgs.callPackage ./pkgs/grub_2.02/2.0x.nix { zfsSupport = false; }).overrideAttrs (a: {patches = [./pkgs/grub_2.02/openpgp-hashed-keyid-subpacket.patch] ++ a.patches;}));
   grub_204 = grubDevBuild (pkgs.callPackage ./pkgs/grub_2.04/2.0x.nix { zfsSupport = false; });
 
   # yes, this is a very non-binary-reproducible thing being described as a Nix derivation.
