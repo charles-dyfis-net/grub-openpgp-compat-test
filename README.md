@@ -30,27 +30,35 @@ As of this writing, something like:
 ```
 Version              Pubkey Format        Sig Format           Result               Grub Build
 ===                  ===                  ===                  ===                  ===
-GRUB_2.02_Unpatched  Go                   Go                   VERIFY FAILED        /nix/store/r9bwr77fa476zq0k0mxzqz9qbvgawv6i-grub-2.02
-GRUB_2.02_Unpatched  Go                   Gnupg                VERIFY FAILED        /nix/store/r9bwr77fa476zq0k0mxzqz9qbvgawv6i-grub-2.02
-GRUB_2.02_Unpatched  Gnupg                Go                   VERIFY FAILED        /nix/store/r9bwr77fa476zq0k0mxzqz9qbvgawv6i-grub-2.02
-GRUB_2.02_Unpatched  Gnupg                Gnupg                VERIFY SUCCEEDED     /nix/store/r9bwr77fa476zq0k0mxzqz9qbvgawv6i-grub-2.02
-GRUB_2.02_Patched    Go                   Go                   VERIFY FAILED        /nix/store/szsk26vvxbpjdlzsldn0vkpx0r74hrcy-grub-2.02
-GRUB_2.02_Patched    Go                   Gnupg                VERIFY FAILED        /nix/store/szsk26vvxbpjdlzsldn0vkpx0r74hrcy-grub-2.02
-GRUB_2.02_Patched    Gnupg                Go                   VERIFY SUCCEEDED     /nix/store/szsk26vvxbpjdlzsldn0vkpx0r74hrcy-grub-2.02
-GRUB_2.02_Patched    Gnupg                Gnupg                VERIFY SUCCEEDED     /nix/store/szsk26vvxbpjdlzsldn0vkpx0r74hrcy-grub-2.02
-GRUB_2.04_Unpatched  Go                   Go                   VERIFY FAILED        /nix/store/49fgagxwcvv6pid6axs2g0953nynknpn-grub-2.04
-GRUB_2.04_Unpatched  Go                   Gnupg                VERIFY FAILED        /nix/store/49fgagxwcvv6pid6axs2g0953nynknpn-grub-2.04
-GRUB_2.04_Unpatched  Gnupg                Go                   VERIFY FAILED        /nix/store/49fgagxwcvv6pid6axs2g0953nynknpn-grub-2.04
-GRUB_2.04_Unpatched  Gnupg                Gnupg                VERIFY SUCCEEDED     /nix/store/49fgagxwcvv6pid6axs2g0953nynknpn-grub-2.04
-GRUB_master          Go                   Go                   VERIFY FAILED        /nix/store/lagkfcw1yy3v0843w18qf2mc5yywc57a-grub-master
-GRUB_master          Go                   Gnupg                VERIFY FAILED        /nix/store/lagkfcw1yy3v0843w18qf2mc5yywc57a-grub-master
-GRUB_master          Gnupg                Go                   VERIFY FAILED        /nix/store/lagkfcw1yy3v0843w18qf2mc5yywc57a-grub-master
-GRUB_master          Gnupg                Gnupg                VERIFY SUCCEEDED     /nix/store/lagkfcw1yy3v0843w18qf2mc5yywc57a-grub-master
+GRUB_2.02_Unpatched  Go                   Go                   VERIFY FAILED        /nix/store/6ddba840xvxgiil2b823inisj9x815is-grub-2.02
+GRUB_2.02_Unpatched  Go                   Gnupg                VERIFY FAILED        /nix/store/6ddba840xvxgiil2b823inisj9x815is-grub-2.02
+GRUB_2.02_Unpatched  Gnupg                Go                   VERIFY FAILED        /nix/store/6ddba840xvxgiil2b823inisj9x815is-grub-2.02
+GRUB_2.02_Unpatched  Gnupg                Gnupg                VERIFY SUCCEEDED     /nix/store/6ddba840xvxgiil2b823inisj9x815is-grub-2.02
+GRUB_2.02_Patched    Go                   Go                   VERIFY FAILED        /nix/store/fl28ih7v9n008qpmn039fz3arxjscc0g-grub-2.02
+GRUB_2.02_Patched    Go                   Gnupg                VERIFY FAILED        /nix/store/fl28ih7v9n008qpmn039fz3arxjscc0g-grub-2.02
+GRUB_2.02_Patched    Gnupg                Go                   VERIFY SUCCEEDED     /nix/store/fl28ih7v9n008qpmn039fz3arxjscc0g-grub-2.02
+GRUB_2.02_Patched    Gnupg                Gnupg                VERIFY SUCCEEDED     /nix/store/fl28ih7v9n008qpmn039fz3arxjscc0g-grub-2.02
+GRUB_2.04_Unpatched  Go                   Go                   VERIFY FAILED        /nix/store/zpgq3ydnbpc1w453639s6pjv1hzaax2r-grub-2.04
+GRUB_2.04_Unpatched  Go                   Gnupg                VERIFY FAILED        /nix/store/zpgq3ydnbpc1w453639s6pjv1hzaax2r-grub-2.04
+GRUB_2.04_Unpatched  Gnupg                Go                   VERIFY FAILED        /nix/store/zpgq3ydnbpc1w453639s6pjv1hzaax2r-grub-2.04
+GRUB_2.04_Unpatched  Gnupg                Gnupg                VERIFY SUCCEEDED     /nix/store/zpgq3ydnbpc1w453639s6pjv1hzaax2r-grub-2.04
+GRUB_2.04_Patched    Go                   Go                   VERIFY FAILED        /nix/store/3apg7qsp2n1lpm7qf1grag67dvllahy9-grub-2.04
+GRUB_2.04_Patched    Go                   Gnupg                VERIFY FAILED        /nix/store/3apg7qsp2n1lpm7qf1grag67dvllahy9-grub-2.04
+GRUB_2.04_Patched    Gnupg                Go                   VERIFY SUCCEEDED     /nix/store/3apg7qsp2n1lpm7qf1grag67dvllahy9-grub-2.04
+GRUB_2.04_Patched    Gnupg                Gnupg                VERIFY SUCCEEDED     /nix/store/3apg7qsp2n1lpm7qf1grag67dvllahy9-grub-2.04
+GRUB_master          Go                   Go                   VERIFY FAILED        /nix/store/zrmrrnf3azsp5q76wfmz6sjfmqwf3iag-grub-master
+GRUB_master          Go                   Gnupg                VERIFY FAILED        /nix/store/zrmrrnf3azsp5q76wfmz6sjfmqwf3iag-grub-master
+GRUB_master          Gnupg                Go                   VERIFY FAILED        /nix/store/zrmrrnf3azsp5q76wfmz6sjfmqwf3iag-grub-master
+GRUB_master          Gnupg                Gnupg                VERIFY SUCCEEDED     /nix/store/zrmrrnf3azsp5q76wfmz6sjfmqwf3iag-grub-master
+GRUB_master_Patched  Go                   Go                   VERIFY FAILED        /nix/store/44g1wb695d84ndmrn9v1gxzvmz03cxnq-grub-master
+GRUB_master_Patched  Go                   Gnupg                VERIFY FAILED        /nix/store/44g1wb695d84ndmrn9v1gxzvmz03cxnq-grub-master
+GRUB_master_Patched  Gnupg                Go                   VERIFY SUCCEEDED     /nix/store/44g1wb695d84ndmrn9v1gxzvmz03cxnq-grub-master
+GRUB_master_Patched  Gnupg                Gnupg                VERIFY SUCCEEDED     /nix/store/44g1wb695d84ndmrn9v1gxzvmz03cxnq-grub-master
 ```
 
 ...telling us that:
 
-- The patched version of 2.02, unlike all others, can verify signatures created by go/crypt/openpgp
+- Patched versions of grub 2.02, 2.04, or current master of this writing, can verify signatures created by go/crypt/openpgp; no others can do so.
 - All known versions of GnuPG, including the patched one, can't read public-key files exported by go/crypt/openpgp.
 
 ...and giving us a directory name where we can find the (debug-symbol-enabled) GRUB binaries that were used to generate each test result.

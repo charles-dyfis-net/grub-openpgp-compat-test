@@ -1,0 +1,184 @@
+Currently GRUB2 verify logic searches PGP keyid only in unhashed subpackets of
+PGP signature packet. As a result, signatures generated with GoLang openpgp
+package (https://godoc.org/golang.org/x/crypto/openpgp) could not be verified,
+because this package puts keyid in hashed subpackets and GRUB code never
+initializes the keyid variable, therefore is not able to find "verification
+key" with id 0x0.
+
+(Add further description per thread at https://lists.gnu.org/archive/html/grub-devel/2016-11/msg00073.html)
+
+Signed-off-by: Ignat Korchagin <ignat@cloudflare.com>
+[ modified by Charles Duffy <charles@dyfis.net>, needs his Signed-off-by before merging ]
+[ modified by dja: rebase, split out 'readbuf' to both readbuf and subpacket_buf for clarity
+  signature_test still passes but I have not run any other tests ]
+[ Under DCO rules I cannot provied a signed-off-by until Charles certifies his work can be redistributed ]
+---
+ grub-core/commands/pgp.c | 117 ++++++++++++++++++++++++++-------------
+ 1 file changed, 77 insertions(+), 40 deletions(-)
+
+diff --git a/grub-core/commands/pgp.c b/grub-core/commands/pgp.c
+index bbf6871fe71f..ad91f462bb91 100644
+--- a/grub-core/commands/pgp.c
++++ b/grub-core/commands/pgp.c
+@@ -448,6 +448,38 @@ struct grub_pubkey_context
+   void *hash_context;
+ };
+ 
++static grub_uint64_t
++grub_subpacket_keyid_search (const grub_uint8_t * sub, grub_ssize_t sub_len)
++{
++  const grub_uint8_t *ptr;
++  grub_uint32_t l;
++  grub_uint64_t keyid = 0;
++
++  for (ptr = sub; ptr < sub + sub_len; ptr += l)
++    {
++      if (*ptr < 192)
++       l = *ptr++;
++      else if (*ptr < 255)
++       {
++         if (ptr + 1 >= sub + sub_len)
++           break;
++         l = (((ptr[0] & ~192) << GRUB_CHAR_BIT) | ptr[1]) + 192;
++         ptr += 2;
++       }
++      else
++       {
++         if (ptr + 5 >= sub + sub_len)
++           break;
++         l = grub_be_to_cpu32 (grub_get_unaligned32 (ptr + 1));
++         ptr += 5;
++       }
++      if (*ptr == 0x10 && l >= 8)
++       keyid = grub_get_unaligned64 (ptr + 1);
++    }
++
++  return keyid;
++}
++
+ static grub_err_t
+ grub_verify_signature_init (struct grub_pubkey_context *ctxt, grub_file_t sig)
+ {
+@@ -520,7 +552,7 @@ grub_verify_signature_real (struct grub_pubkey_context *ctxt,
+   gcry_mpi_t mpis[10];
+   grub_uint8_t pk = ctxt->v4.pkeyalgo;
+   grub_size_t i;
+-  grub_uint8_t *readbuf = NULL;
++  grub_uint8_t *readbuf = NULL, *subpacket_buf = NULL;
+   unsigned char *hval;
+   grub_ssize_t rem = grub_be_to_cpu16 (ctxt->v4.hashed_sub);
+   grub_uint32_t headlen = grub_cpu_to_be32 (rem + 6);
+@@ -538,17 +570,29 @@ grub_verify_signature_real (struct grub_pubkey_context *ctxt,
+ 
+   ctxt->hash->write (ctxt->hash_context, &ctxt->v, sizeof (ctxt->v));
+   ctxt->hash->write (ctxt->hash_context, &ctxt->v4, sizeof (ctxt->v4));
+-  while (rem)
++
++  subpacket_buf = grub_malloc (rem);
++  if (!subpacket_buf)
++    goto fail;
++
++  r = 0;
++  while (r < rem)
+     {
+-      r = grub_file_read (ctxt->sig, readbuf,
+-			  rem < READBUF_SIZE ? rem : READBUF_SIZE);
+-      if (r < 0)
+-	goto fail;
+-      if (r == 0)
++      grub_ssize_t rr = grub_file_read (ctxt->sig, subpacket_buf + r, rem - r);
++      if (rr < 0)
++        goto fail;
++      if (rr == 0)
+ 	break;
+-      ctxt->hash->write (ctxt->hash_context, readbuf, r);
+-      rem -= r;
++      r += rr;
+     }
++  if (r != rem)
++    goto fail;
++  ctxt->hash->write (ctxt->hash_context, subpacket_buf, rem);
++
++  keyid = grub_subpacket_keyid_search (subpacket_buf, rem);
++  grub_free (subpacket_buf);
++  subpacket_buf = NULL;
++
+   ctxt->hash->write (ctxt->hash_context, &ctxt->v, sizeof (ctxt->v));
+   s = 0xff;
+   ctxt->hash->write (ctxt->hash_context, &s, sizeof (s));
+@@ -556,37 +600,27 @@ grub_verify_signature_real (struct grub_pubkey_context *ctxt,
+   r = grub_file_read (ctxt->sig, &unhashed_sub, sizeof (unhashed_sub));
+   if (r != sizeof (unhashed_sub))
+     goto fail;
+-  {
+-    grub_uint8_t *ptr;
+-    grub_uint32_t l;
+-    rem = grub_be_to_cpu16 (unhashed_sub);
+-    if (rem > READBUF_SIZE)
+-      goto fail;
+-    r = grub_file_read (ctxt->sig, readbuf, rem);
+-    if (r != rem)
+-      goto fail;
+-    for (ptr = readbuf; ptr < readbuf + rem; ptr += l)
+-      {
+-	if (*ptr < 192)
+-	  l = *ptr++;
+-	else if (*ptr < 255)
+-	  {
+-	    if (ptr + 1 >= readbuf + rem)
+-	      break;
+-	    l = (((ptr[0] & ~192) << GRUB_CHAR_BIT) | ptr[1]) + 192;
+-	    ptr += 2;
+-	  }
+-	else
+-	  {
+-	    if (ptr + 5 >= readbuf + rem)
+-	      break;
+-	    l = grub_be_to_cpu32 (grub_get_unaligned32 (ptr + 1));
+-	    ptr += 5;
+-	  }
+-	if (*ptr == 0x10 && l >= 8)
+-	  keyid = grub_get_unaligned64 (ptr + 1);
+-      }
+-  }
++
++  rem = grub_be_to_cpu16 (unhashed_sub);
++  subpacket_buf = grub_malloc (rem);
++  if (!subpacket_buf)
++    goto fail;
++
++  r = 0;
++  while (r < rem)
++    {
++     grub_ssize_t rr = grub_file_read (ctxt->sig, subpacket_buf + r, rem - r);
++     if (rr < 0)
++       goto fail;
++     if (rr == 0)
++       break;
++     r += rr;
++    }
++  if (r != rem)
++    goto fail;
++
++  if (keyid == 0)
++    keyid = grub_subpacket_keyid_search (subpacket_buf, rem);
+ 
+   ctxt->hash->final (ctxt->hash_context);
+ 
+@@ -656,10 +690,13 @@ grub_verify_signature_real (struct grub_pubkey_context *ctxt,
+     goto fail;
+ 
+   grub_free (readbuf);
++  grub_free (subpacket_buf);
+ 
+   return GRUB_ERR_NONE;
+ 
+  fail:
++  if (subpacket_buf)
++    grub_free (subpacket_buf);
+   grub_free (readbuf);
+   if (!grub_errno)
+     return grub_error (GRUB_ERR_BAD_SIGNATURE, N_("bad signature"));
+-- 
+2.20.1
+
