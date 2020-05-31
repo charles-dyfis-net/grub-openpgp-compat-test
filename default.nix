@@ -28,8 +28,8 @@ in rec {
     name = "grub-master";
     src = builtins.fetchGit { url = "https://git.savannah.gnu.org/git/grub.git"; };
   }));
-  grub_204_dja = grub_204.overrideAttrs (a: {patches = [./dja-rebase-20200528.patch];});
-  grub_master_dja = grub_master.overrideAttrs (a: {patches = [./dja-rebase-20200528.patch];});
+  grub_204_patched = grub_204.overrideAttrs (a: { patches = [./0001-pgp-Recognize-issuer-subpackets-in-either-hashed-or-.patch];});
+  grub_master_patched = grub_master.overrideAttrs (a: {patches = [./0001-pgp-Recognize-issuer-subpackets-in-either-hashed-or-.patch];});
 
   goPgpTools = pkgs.buildGoPackage rec {
     pname = "openpgp_test_tools";
@@ -96,12 +96,12 @@ in rec {
 
   # The data used to populate those test cases:
   grubVersions = [
-    {name = "GRUB_2.02_Unpatched"; grub = grub_202;         moduleName = "verify";}
-    {name = "GRUB_2.02_Patched";   grub = grub_202_patched; moduleName = "verify";}
-    {name = "GRUB_2.04_Unpatched"; grub = grub_204;         moduleName = "pgp";}
-    {name = "GRUB_2.04_Patched";   grub = grub_204_dja;     moduleName = "pgp";}
-    {name = "GRUB_master";         grub = grub_master;      moduleName = "pgp";}
-    {name = "GRUB_master_Patched"; grub = grub_master_dja;  moduleName = "pgp";}
+    {name = "GRUB_2.02_Unpatched"; grub = grub_202;            moduleName = "verify";}
+    {name = "GRUB_2.02_Patched";   grub = grub_202_patched;    moduleName = "verify";}
+    {name = "GRUB_2.04_Unpatched"; grub = grub_204;            moduleName = "pgp";}
+    {name = "GRUB_2.04_Patched";   grub = grub_204_patched;    moduleName = "pgp";}
+    {name = "GRUB_master";         grub = grub_master;         moduleName = "pgp";}
+    {name = "GRUB_master_Patched"; grub = grub_master_patched; moduleName = "pgp";}
   ];
   pubKeyForms = [
     {name = "Go";    pubKey = testPubKeyGo; }
